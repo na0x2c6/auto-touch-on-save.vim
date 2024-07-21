@@ -8,5 +8,5 @@ let g:auto_touch_on_save_path_converter = get(g:, 'auto_touch_on_save_path_conve
 
 augroup AutoTouchOnSave
   autocmd!
-  autocmd BufWritePost * call auto_touch_on_save#execute()
+  autocmd BufWritePost,FileWritePost * call auto_touch_on_save#execute(expand('<afile>'))
 augroup END

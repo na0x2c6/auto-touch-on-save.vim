@@ -15,7 +15,7 @@ By offering customizable conditions and path conversion, this plugin allows user
 - Execute custom commands on file save
 - Customizable conditions for command execution
 - Flexible path conversion to support various workflows (e.g., local to remote path conversion)
-- Support for both Vim functions and external scripts for condition checking and path conversion
+- Support for both Vim functions and external commands for condition checking and path conversion
 - Automatic file reload after touch to prevent unnecessary "file changed" warnings
 
 ## Installation
@@ -43,7 +43,7 @@ let g:auto_touch_on_save_condition = 'custom_condition_script.sh'
 let g:auto_touch_on_save_command = 'custom_touch_command.sh'
 
 " Set the path converter (optional)
-let g:auto_touch_on_save_path_converter = 'custom_path_converter.sh'
+let g:auto_touch_on_save_path_converter = 'sed "s|^/home/user|/remote/path|"'
 
 " Or set a Vim function for path conversion (optional)
 function! CustomPathConverter(path)
@@ -63,7 +63,7 @@ let g:AutoTouchOnSavePathConverter = function('CustomPathConverter')
 ### Path Conversion Priority
 
 1. If `g:AutoTouchOnSavePathConverter` is defined as a Vim function, it will be used for path conversion.
-2. If `g:AutoTouchOnSavePathConverter` is not defined, but `g:auto_touch_on_save_path_converter` is set to a non-empty string, it will be used as an external script for path conversion.
+2. If `g:AutoTouchOnSavePathConverter` is not defined, but `g:auto_touch_on_save_path_converter` is set to a non-empty string, it will be used as an external command for path conversion.
 3. If neither is set, no path conversion will be performed.
 
 ## Usage Examples
@@ -92,15 +92,20 @@ endfunction
 let g:AutoTouchOnSavePathConverter = function('ConvertPath')
 ```
 
-### Path Conversion using External Script
+### Path Conversion using sed Command
 
 ```viml
-let g:auto_touch_on_save_path_converter = 'path_converter.sh'
+" The command will receive the path via stdin and should output the converted path
+let g:auto_touch_on_save_path_converter = 'sed "s|^/home/user|/remote/path|"'
 ```
+
+This example uses `sed` to replace `/home/user` at the beginning of the path with `/remote/path`.
 
 ### [podman machine](https://docs.podman.io/en/latest/markdown/podman-machine.1.html) Example
 
 ```viml
+" The condition checks if a Podman machine is running.
 let g:auto_touch_on_save_condition = 'podman machine list --format "{{ .Running }}" | grep -q true'
+" The command uses `podman machine ssh` to execute the `touch` command inside the Podman machine.
 let g:auto_touch_on_save_command = 'podman machine ssh -- touch'
 ```

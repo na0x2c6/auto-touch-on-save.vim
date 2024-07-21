@@ -1,24 +1,20 @@
-function! auto_touch_on_save#system(cmd)
-  return system(a:cmd)
-endfunction
-
-function! auto_touch_on_save#execute() abort
-  if auto_touch_on_save#check_condition()
-    call auto_touch_on_save#run_command()
-    call auto_touch_on_save#reload_file()
+function! auto_touch_on_save#execute(path) abort
+  if !auto_touch_on_save#check_condition()
+    return
   endif
+  call auto_touch_on_save#run_command(a:path)
+  call auto_touch_on_save#reload_file(a:path)
 endfunction
 
 function! auto_touch_on_save#check_condition() abort
-  let l:result = auto_touch_on_save#system(g:auto_touch_on_save_condition)
+  let l:result = system(g:auto_touch_on_save_condition)
   return v:shell_error == 0
 endfunction
 
-function! auto_touch_on_save#run_command() abort
-  let l:path = expand('%:p')
-  let l:path = auto_touch_on_save#convert_path(l:path)
+function! auto_touch_on_save#run_command(path) abort
+  let l:path = auto_touch_on_save#convert_path(fnamemodify(a:path, ':p'))
   let l:command = g:auto_touch_on_save_command . ' ' . shellescape(l:path)
-  call auto_touch_on_save#system(l:command)
+  call system(l:command)
 endfunction
 
 function! auto_touch_on_save#convert_path(path) abort
@@ -27,14 +23,16 @@ function! auto_touch_on_save#convert_path(path) abort
     return g:AutoTouchOnSavePathConverter(a:path)
   elseif !empty(g:auto_touch_on_save_path_converter)
     " Fall back to the string command if set
-    return trim(auto_touch_on_save#system(g:auto_touch_on_save_path_converter . ' ' . shellescape(a:path)))
+    return trim(system(g:auto_touch_on_save_path_converter, a:path))
   endif
   " If no conversion is set, return the original path
   return a:path
 endfunction
 
-function! auto_touch_on_save#reload_file() abort
-  let l:current_view = winsaveview()
-  checktime
-  call winrestview(l:current_view)
+function! auto_touch_on_save#reload_file(path) abort
+  if !bufexists(a:path)
+    return
+  endif
+
+  execute 'checktime ' . a:path
 endfunction
