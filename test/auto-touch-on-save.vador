@@ -1,0 +1,43 @@
+" Test setup
+Before:
+  source autoload/auto_touch_on_save.vim
+  let g:auto_touch_on_save_condition = 'true'
+  let g:auto_touch_on_save_command = 'touch'
+  let g:auto_touch_on_save_path_converter = ''
+  if exists('*g:AutoTouchOnSavePathConverter')
+    delfunction g:AutoTouchOnSavePathConverter
+  endif
+
+" Test check_condition function
+Execute (check_condition should return true when condition is 'true'):
+  let g:auto_touch_on_save_condition = 'true'
+  AssertEqual 1, auto_touch_on_save#check_condition()
+
+Execute (check_condition should return false when condition is 'false'):
+  let g:auto_touch_on_save_condition = 'false'
+  AssertEqual 0, auto_touch_on_save#check_condition()
+
+" Test convert_path function
+Execute (convert_path should return the same path when no converter is set):
+  AssertEqual '/test/path', auto_touch_on_save#convert_path('/test/path')
+
+Execute (convert_path should use Vim function converter when set):
+  function! g:AutoTouchOnSavePathConverter(path)
+    return '/vim_converted' . a:path
+  endfunction
+  AssertEqual '/vim_converted/test/path', auto_touch_on_save#convert_path('/test/path')
+  delfunction g:AutoTouchOnSavePathConverter
+
+Execute (convert_path should use shell command converter when set):
+  let g:auto_touch_on_save_path_converter = 'printf /shell_converted%s'
+  AssertEqual '/shell_converted/test/path', auto_touch_on_save#convert_path('/test/path')
+  let g:auto_touch_on_save_path_converter = ''
+
+Execute (convert_path should prefer Vim function over shell command when both are set):
+  function! g:AutoTouchOnSavePathConverter(path)
+    return '/vim_preferred' . a:path
+  endfunction
+  let g:auto_touch_on_save_path_converter = 'printf /shell_converted%s'
+  AssertEqual '/vim_preferred/test/path', auto_touch_on_save#convert_path('/test/path')
+  delfunction g:AutoTouchOnSavePathConverter
+  let g:auto_touch_on_save_path_converter = ''
